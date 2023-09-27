@@ -39,19 +39,12 @@ app.post('/api/v1/tours', (req, res) => {
     `${__dirname}/dev-data/data/tours-simple.json`,
     JSON.stringify(tours),
     (err) => {
-      if (err) {
-        res.status(404).json({
-          status: 'failed',
-          description: 'can not store the Tour',
-        });
-      } else {
-        res.status(201).json({
-          status: 'success',
-          data: {
-            tour: newTour,
-          },
-        });
-      }
+      res.status(201).json({
+        status: 'success',
+        data: {
+          tour: newTour,
+        },
+      });
     }
   );
 });
