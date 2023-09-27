@@ -34,17 +34,24 @@ app.post('/api/v1/tours', (req, res) => {
   const newTour = Object.assign({ id: newId }, req.body);
 
   tours.push(newTour);
-  
+
   fs.writeFile(
     `${__dirname}/dev-data/data/tours-simple.json`,
     JSON.stringify(tours),
     (err) => {
-      res.status(201).json({
-        status: 'success',
-        data: {
-          tour: newTour,
-        },
-      });
+      if (err) {
+        res.status(404).json({
+          status: 'failed',
+          description: 'can not store the Tour',
+        });
+      } else {
+        res.status(201).json({
+          status: 'success',
+          data: {
+            tour: newTour,
+          },
+        });
+      }
     }
   );
 });
