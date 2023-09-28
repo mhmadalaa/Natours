@@ -9,14 +9,14 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
-app.get('/', (req, res) => {
+const getHome = (req, res) => {
   res.status(200).json({
     message: 'Hello from Natrous app',
     user: 'malaa',
   });
-});
+};
 
-app.get('/api/v1/tours', (req, res) => {
+const getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
     results: tours.length,
@@ -24,9 +24,9 @@ app.get('/api/v1/tours', (req, res) => {
       tours: tours,
     },
   });
-});
+};
 
-app.get('/api/v1/tours/:id', (req, res) => {
+const getTourById = (req, res) => {
   const tour = tours.find((el) => el.id === parseInt(req.params.id));
 
   if (tour) {
@@ -40,9 +40,9 @@ app.get('/api/v1/tours/:id', (req, res) => {
       message: 'tour not founded',
     });
   }
-});
+};
 
-app.post('/api/v1/tours', (req, res) => {
+const postNewTour = (req, res) => {
   const newId = tours[tours.length - 1].id + 1;
   const newTour = Object.assign({ id: newId }, req.body);
 
@@ -60,22 +60,34 @@ app.post('/api/v1/tours', (req, res) => {
       });
     }
   );
-});
+};
 
-app.post('/', (req, res) => {
+const testPost = (req, res) => {
   res.status(200).send('post method...');
-});
+};
 
-app.patch('/api/v1/tours', (req, res) => {
+const testPatch = (req, res) => {
   res.status(200).send('pathch...');
-});
+};
 
-app.delete('/api/v1/tours/:id', (req, res) => {
+const testDelete = (req, res) => {
   res.status(202).json({
     status: 'success',
     data: null,
   });
-});
+};
+
+// app.get('/', getHome);
+// app.get('/api/v1/tours', getAllTours);
+// app.get('/api/v1/tours/:id', getTourById);
+// app.post('/api/v1/tours', postNewTour);
+// app.post('/', testPost);
+// app.patch('/api/v1/tours', testPatch);
+// app.delete('/api/v1/tours/:id', testDelete);
+
+app.route('/').get(getHome).post(testPost);
+app.route('/api/v1/tours').get(getAllTours).post(postNewTour).patch(testPatch);
+app.route('/api/v1/tours/:id').get(getTourById).delete(testDelete);
 
 app.listen(process.env.PORT, process.env.HOST, () => {
   console.log('listenting...');
