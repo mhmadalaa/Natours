@@ -1,14 +1,28 @@
 require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
+const { toUnicode } = require('punycode');
 const app = express();
 
+// MIDDELWARES
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log('hello from middelware...');
+  next();
+});
+
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
+  next();
+});
+
+// DATA
 const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
+// CONTROLLERS
 const getHome = (req, res) => {
   res.status(200).json({
     message: 'Hello from Natrous app',
@@ -20,6 +34,7 @@ const getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
     results: tours.length,
+    time: req.requestTime,
     data: {
       tours: tours,
     },
@@ -77,6 +92,8 @@ const testDelete = (req, res) => {
   });
 };
 
+// ROUTERS
+
 // app.get('/', getHome);
 // app.get('/api/v1/tours', getAllTours);
 // app.get('/api/v1/tours/:id', getTourById);
@@ -92,3 +109,6 @@ app.route('/api/v1/tours/:id').get(getTourById).delete(testDelete);
 app.listen(process.env.PORT, process.env.HOST, () => {
   console.log('listenting...');
 });
+
+// TODO:
+// docker container with previous node version than 20x
