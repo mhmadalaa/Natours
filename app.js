@@ -109,6 +109,3 @@ app.route('/api/v1/tours/:id').get(getTourById).delete(testDelete);
 app.listen(process.env.PORT, process.env.HOST, () => {
   console.log('listenting...');
 });
-
-// TODO:
-// docker container with previous node version than 20x
