@@ -5,7 +5,39 @@ const tours = JSON.parse(
   fs.readFileSync('./dev-data/data/tours-simple.json')
 );
 
+// MIDDELWARES
+
+exports.checkID = (req, res, next, val) => {
+  console.log(`The id is: ${val}`);
+
+  const tour = tours.find(
+    (el) => el.id === parseInt(req.params.id)
+  );
+
+  if (!tour) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'tour not founded',
+    });
+  }
+
+  next();
+};
+
+exports.checkBody = (req, res, next) => {
+  if (req.body.name && req.body.duration) {
+    next();
+    return;
+  }
+
+  return res.status(500).json({
+    status: 'fail',
+    message: 'not a valid tour to be added',
+  });
+};
+
 // CONTROLLERS
+
 exports.getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -22,17 +54,10 @@ exports.getTourById = (req, res) => {
     (el) => el.id === parseInt(req.params.id)
   );
 
-  if (tour) {
-    res.status(200).json({
-      status: 'success',
-      tour: tour,
-    });
-  } else {
-    res.status(404).json({
-      status: 'fail',
-      message: 'tour not founded',
-    });
-  }
+  res.status(200).json({
+    status: 'success',
+    tour: tour,
+  });
 };
 
 exports.postNewTour = (req, res) => {
