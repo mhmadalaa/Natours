@@ -1,11 +1,21 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
+const app = require('./app');
 
-const app = require('./app') 
+const DB = process.env.DATABASE.replace(
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD,
+);
 
-console.log(app.get('env')); 
-console.log(process.env); 
+mongoose
+  .connect(DB, {
+    useNewUrlParser: true,
+  })
+  .then((con) => {
+    // console.log(con.connections);
+    console.log('DB connecting successful...');
+  });
 
-// START SERVER
-app.listen(process.env.PORT, process.env.HOST, () => {
+app.listen(process.env.PORT || 8000, process.env.HOST, () => {
   console.log('listenting...');
 });

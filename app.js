@@ -7,7 +7,9 @@ const userRouter = require('./routes/userRoute');
 const app = express();
 
 // MIDDELWARES
-app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 app.use(express.json());
 app.use(express.static('./public')); // to server static file not from the route
 
@@ -20,7 +22,6 @@ app.use(express.static('./public')); // to server static file not from the route
 //   req.requestTime = new Date().toISOString();
 //   next();
 // });
-
 
 // ROUTERS
 app.use('/api/v1/tours', tourRouter);

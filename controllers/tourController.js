@@ -1,39 +1,30 @@
-const fs = require('fs');
+const Tour = require('./../models/tourModel');
 
-// DATA
-const tours = JSON.parse(
-  fs.readFileSync('./dev-data/data/tours-simple.json')
-);
+/*
+  replace all xxxx for the valide Data from database, 
+  it's because file system db we use before we deprecated.
+*/
 
 // MIDDELWARES
 
 exports.checkID = (req, res, next, val) => {
-  console.log(`The id is: ${val}`);
+  // console.log(`The id is: ${val}`);
 
-  const tour = tours.find(
-    (el) => el.id === parseInt(req.params.id)
-  );
-
-  if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'tour not founded',
-    });
-  }
+  // return res.status(404).json({
+  //   status: 'fail',
+  //   message: 'tour not founded',
+  // });
 
   next();
 };
 
 exports.checkBody = (req, res, next) => {
-  if (req.body.name && req.body.duration) {
-    next();
-    return;
-  }
+  // return res.status(500).json({
+  //   status: 'fail',
+  //   message: 'not a valid tour to be added',
+  // });
 
-  return res.status(500).json({
-    status: 'fail',
-    message: 'not a valid tour to be added',
-  });
+  next();
 };
 
 // CONTROLLERS
@@ -41,43 +32,28 @@ exports.checkBody = (req, res, next) => {
 exports.getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
-    results: tours.length,
+    results: xxxx,
     time: req.requestTime,
     data: {
-      tours: tours,
+      tours: xxxx,
     },
   });
 };
 
 exports.getTourById = (req, res) => {
-  const tour = tours.find(
-    (el) => el.id === parseInt(req.params.id)
-  );
-
   res.status(200).json({
     status: 'success',
-    tour: tour,
+    tour: xxxx,
   });
 };
 
 exports.postNewTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newId }, req.body);
-
-  tours.push(newTour);
-
-  fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(201).json({
-        status: 'success',
-        data: {
-          tour: newTour,
-        },
-      });
-    }
-  );
+  res.status(201).json({
+    status: 'success',
+    data: {
+      tour: xxxx,
+    },
+  });
 };
 
 exports.testPost = (req, res) => {
