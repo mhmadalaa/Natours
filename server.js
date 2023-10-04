@@ -12,8 +12,10 @@ mongoose
     useNewUrlParser: true,
   })
   .then((con) => {
-    // console.log(con.connections);
     console.log('DB connecting successful...');
+  })
+  .catch((err) => {
+    console.log('DB connection ERROR!!');
   });
 
 app.listen(process.env.PORT || 8000, process.env.HOST, () => {
