@@ -18,7 +18,7 @@ app.use(express.static('./public')); // to server static file not from the route
 //   next();
 // });
 
-// app.use((req, res, next) => {
+// app.use((req, res, next) => {.
 //   req.requestTime = new Date().toISOString();
 //   next();
 // });

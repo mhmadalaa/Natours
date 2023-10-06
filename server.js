@@ -18,6 +18,6 @@ mongoose
     console.log('DB connection ERROR!!');
   });
 
-app.listen(process.env.PORT || 8000, process.env.HOST, () => {
+app.listen(process.env.PORT || 3000, process.env.HOST, () => {
   console.log('listenting...');
 });

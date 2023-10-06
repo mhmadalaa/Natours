@@ -1,15 +1,27 @@
 const Tour = require('./../models/tourModel');
 
-// TODO: middelware to validate id or check it with if statments in controller
-
 exports.getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
+    // we are not set it as normal because queryObj will be a refrence to req.query
+    // and if we change queryObj will reflect in req.query also and we not need this behavior
+    const queryObj = { ...req.query };
+    const excludeFields = ['page', 'sort', 'limit', 'fields'];
+    excludeFields.forEach((el) => delete queryObj[el]);
+
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+
+    let query = Tour.find(JSON.parse(queryStr));
+
+    if (req.query.sort) {
+      query = query.sort(req.query.sort);
+    }
+
+    let tours = await query;
 
     res.status(200).json({
       status: 'success',
       results: tours.length,
-      time: req.requestTime,
       data: {
         tours,
       },
