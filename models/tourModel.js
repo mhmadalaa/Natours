@@ -53,6 +53,7 @@ const tourSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now(),
+    select: false, // to be shown in the client or not 
   },
   startDates: {
     type: [Date],
