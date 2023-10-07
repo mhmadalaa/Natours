@@ -1,5 +1,13 @@
 const Tour = require('./../models/tourModel');
 
+exports.topTours = (req, res, next) => {
+  req.query.sort = '-ratingsAverage,price';
+  req.query.limit = '5';
+  req.query.fields = 'name,price,ratingsAverage,summary';
+
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
   try {
     const queryObj = { ...req.query };
@@ -36,6 +44,7 @@ exports.getAllTours = async (req, res) => {
     query = query.skip(skip).limit(limit);
 
     // THE RESULT
+    // TODO: Handling the returned result with better way
     if (req.query.page) {
       const tourLength = await Tour.countDocuments();
       if (skip >= tourLength) {
