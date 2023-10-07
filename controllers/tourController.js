@@ -28,9 +28,26 @@ exports.getAllTours = async (req, res) => {
       query = query.select('-__v'); // Exclude field with - sign
     }
 
-    // THE RESULT
-    const tours = await query;
+    // PAGINATION we always need to do pagination even user doesn't specifiy
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 50;
+    const skip = (page - 1) * limit;
 
+    query = query.skip(skip).limit(limit);
+
+    // THE RESULT
+    if (req.query.page) {
+      const tourLength = await Tour.countDocuments();
+      if (skip >= tourLength) {
+        res.status(404).json({
+          status: 'fail',
+          message: 'Exceded the data limit',
+        });
+        return;
+      }
+    }
+
+    const tours = await query;
     res.status(200).json({
       status: 'success',
       results: tours.length,
