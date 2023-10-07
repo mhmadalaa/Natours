@@ -1,4 +1,5 @@
 const Tour = require('./../models/tourModel');
+const APIFeatures = require('./../utils/apiFeatures');
 
 exports.topTours = (req, res, next) => {
   req.query.sort = '-ratingsAverage,price';
@@ -10,53 +11,13 @@ exports.topTours = (req, res, next) => {
 
 exports.getAllTours = async (req, res) => {
   try {
-    const queryObj = { ...req.query };
-    const excludeFields = ['page', 'sort', 'limit', 'fields'];
-    excludeFields.forEach((el) => delete queryObj[el]);
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
 
-    // PROCESS QUERY OBJECT TO MATCH MONGO FORMAT
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
-    let query = Tour.find(JSON.parse(queryStr));
-
-    // SORTING
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort('-createdAt');
-    }
-
-    // LIMITING
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v'); // Exclude field with - sign
-    }
-
-    // PAGINATION we always need to do pagination even user doesn't specifiy
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 50;
-    const skip = (page - 1) * limit;
-
-    query = query.skip(skip).limit(limit);
-
-    // THE RESULT
-    // TODO: Handling the returned result with better way
-    if (req.query.page) {
-      const tourLength = await Tour.countDocuments();
-      if (skip >= tourLength) {
-        res.status(404).json({
-          status: 'fail',
-          message: 'Exceded the data limit',
-        });
-        return;
-      }
-    }
-
-    const tours = await query;
+    const tours = await features.query;
     res.status(200).json({
       status: 'success',
       results: tours.length,
