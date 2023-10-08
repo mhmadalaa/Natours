@@ -109,14 +109,12 @@ exports.getTourStats = async (req, res) => {
     const stats = await Tour.aggregate([
       {
         $match: {
-          ratingsAverage: { $gte: 4.5 },
+          ratingsAverage: { $gte: 4.1 },
         },
       },
       {
         $group: {
-          // _id: 'null', // that's the key to group by, in case null it groub all the results
           _id: '$ratingsAverage',
-          // _id: { $toUpper: '$difficulty' },
           sum: { $sum: 1 },
           numRatings: { $sum: '$ratingsQuantity' },
           avgRating: { $avg: '$ratingsAverage' },
@@ -134,7 +132,6 @@ exports.getTourStats = async (req, res) => {
       {
         $match: {
           _id: { $ne: 4.9 },
-          // numRatings: { $ne: 23 },
         },
       },
     ]);
@@ -169,7 +166,6 @@ exports.getMonthlyPlan = async (req, res) => {
       },
       {
         $group: {
-          // _id: '$startDates',
           _id: {
             $month: '$startDates',
           },
