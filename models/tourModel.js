@@ -8,6 +8,8 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'A tour must have a name'],
       unique: true,
       trim: true,
+      maxlength: [40, 'A tour name must have less or equal than 40 characters'],
+      minlength: [10, 'A tour name must have more or equal than 10 characters'],
     },
     slug: {
       type: String,
@@ -23,6 +25,10 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is even easy, medium, difficulty',
+      },
     },
     price: {
       type: Number,
@@ -34,6 +40,8 @@ const tourSchema = new mongoose.Schema(
     ratingsAverage: {
       type: Number,
       defaultI: 4.5,
+      min: [1, 'Rating must be above 1.0'],
+      max: [5, 'Rating must be lower than 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -58,7 +66,7 @@ const tourSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now(),
-      select: false, // to be shown in the client or not
+      select: false,
     },
     startDates: {
       type: [Date],
@@ -78,7 +86,7 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
-// pre MIDDLEWARE runs just before save() and create(), insertMany not supported
+// DOCUMENT MIDDLEWARE
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
@@ -89,8 +97,7 @@ tourSchema.post('save', function (doc, next) {
   next();
 });
 
-// QUERY MIDDLEWARE performed before any find operation in DB
-// we use ^find to perform for any find like findOne, findAndDelete, ...etc
+// QUERY MIDDLEWARE
 tourSchema.pre(/^find/, function (next) {
   this.find({ secreteTour: { $ne: true } });
   this.startTime = Date.now();
@@ -113,4 +120,3 @@ tourSchema.pre('aggregate', function (next) {
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
-// 10 5 1 16
