@@ -1,3 +1,35 @@
+const AppError = require('./../utils/appError');
+
+const handleCastErrorDB = (err) => {
+  return `Invalid ${err.path}: ${err.value}`;
+};
+
+const handleDuplicateErrorDB = (err) => {
+  const field = err.errmsg.match(/[^{}]+(?=})/g)[0].replaceAll('"', '');
+
+  return `Duplicate field ${field}, Please use another value!`;
+};
+
+const handleValidationError = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
+
+  return `Invalid input data. ${errors.join('. ')}`;
+};
+
+const handleErrorDB = (err) => {
+  let message = err.message;
+
+  if (err.name === 'CastError') {
+    message = handleCastErrorDB(err);
+  } else if (err.name === 'MongoServerError' || err.code === 11000) {
+    message = handleDuplicateErrorDB(err);
+  } else if (err.name === 'ValidationError') {
+    message = handleValidationError(err);
+  }
+
+  return new AppError(message, 400);
+};
+
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -8,21 +40,12 @@ const sendErrorDev = (err, res) => {
 };
 
 const sendErrorProd = (err, res) => {
-  // we set isOperational in the trusted errors, aka the errors we flag
-  // to handle, but if we have a programming errors or network failures
-  // or something like that which not a case of operations, we will return
-  // a generic error message to handle what the client serve and not to be
-  // messey or to be more informational than what it should be
   if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
-  } else {
-    // log the error
-    console.error('ERROR...', err);
-
-    // send generic resposne
+  } else if (!err.isOperational) {
     res.status(500).json({
       status: 'error',
       message: 'something wrong happen! we will get soon.',
@@ -37,6 +60,7 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    sendErrorProd(err, res);
+    const error = handleErrorDB(err);
+    sendErrorProd(error, res);
   }
 };
