@@ -1,8 +1,14 @@
+# ENVIRONMENT
 .env
 .idea
+
+# NODE
 node_modules
 package-lock.json
-Dockerfile
+
+# MANAGE WORKFLOW
 makefile
 todo
-temp.js
+
+# TEMPORARY CODE
+trashcode
