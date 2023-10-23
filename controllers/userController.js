@@ -32,10 +32,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
 });
 
 exports.updateUser = catchAsync(async (req, res, next) => {
-  let user = await User.findByIdAndUpdate(
-    req.params.id,
-    userSanitize(req.body),
-  );
+  let user = await User.findByIdAndUpdate(req.params.id, req.body);
 
   if (!user) {
     next(new AppError(`user of this id: ${req.params.id} is not found!`));
