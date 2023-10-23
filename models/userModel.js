@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const { default: isEmail } = require('validator/lib/isEmail');
 
 const userSchema = new mongoose.Schema({
@@ -30,21 +31,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please confirm your password'],
     minlength: 8,
+    validate: {
+      // this validator function only works with ""SAVE""
+      // so we need to use save in case of update or similars
+      validator: function (val) {
+        return this.password === val;
+      },
+      message: 'Please, check if password is the same.',
+    },
   },
+});
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined; // to be deleted after check if it's equal
+
+  next();
 });
 
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
-
-/*
-
-{
-  name: mhmad alaa
-  email: malaa@gmail.com
-  photo: "user.jpg"
-  password: 12341234
-  passwordConfirm: 12341234
-}
-
-*/
