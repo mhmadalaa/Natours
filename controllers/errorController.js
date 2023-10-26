@@ -17,7 +17,7 @@ const handleValidationError = (err) => {
 };
 
 const handleErrorDB = (err) => {
-  let message = err.message;
+  let message = 0;
 
   if (err.name === 'CastError') {
     message = handleCastErrorDB(err);
@@ -27,7 +27,27 @@ const handleErrorDB = (err) => {
     message = handleValidationError(err);
   }
 
-  return new AppError(message, 400);
+  if (message !== 0) {
+    return new AppError(message, 400);
+  }
+
+  return 0;
+};
+
+const handleErrorAuth = (err) => {
+  let message = 0;
+
+  if (err.name === 'JsonWebTokenError') {
+    message = 'Invalid token, Please login again';
+  } else if (err.name === 'TokenExpiredError') {
+    message = 'Your token Expired, Please login again';
+  }
+
+  if (message !== 0) {
+    return new AppError(message, 401);
+  }
+
+  return 0;
 };
 
 const sendErrorDev = (err, res) => {
@@ -60,7 +80,9 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    const error = handleErrorDB(err);
+    let error = handleErrorAuth(err);
+    if (!error) error = handleErrorDB(err);
+
     sendErrorProd(error, res);
   }
 };
