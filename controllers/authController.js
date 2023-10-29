@@ -97,3 +97,25 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    // 'req.user' here is very important
+    // as it comes from 'protect' pre middleware
+    // so it must be authenticated to get authorization permissions
+    try {
+      if (!roles.includes(req.user.roles)) {
+        return next(
+          new AppError(
+            'This user does not have the right to do this operation!',
+            403,
+          ),
+        );
+      }
+    } catch (err) {
+      return next(new AppError('This user must be authenticated first!', 401));
+    }
+
+    next();
+  };
+};

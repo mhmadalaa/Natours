@@ -15,12 +15,24 @@ router
 router
   .route('/')
   .get(authController.protect, tourController.getAllTours)
-  .post(tourController.createTour);
+  .post(
+    authController.protect,
+    authController.restrictTo('guide', 'lead-guide', 'admin'),
+    tourController.createTour,
+  );
 
 router
   .route('/:id/')
   .get(tourController.getTourById)
-  .patch(tourController.updateTour)
-  .delete(tourController.deleteTour);
+  .patch(
+    authController.protect,
+    authController.restrictTo('guide', 'lead-guide', 'admin'),
+    tourController.updateTour,
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo('lead-guide', 'admin'),
+    tourController.deleteTour,
+  );
 
 module.exports = router;

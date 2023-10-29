@@ -5,5 +5,6 @@ module.exports = (body) => {
     email: body.email,
     password: body.password,
     passwordConfirm: body.passwordConfirm,
+    roles: body.roles,
   };
 };
