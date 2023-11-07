@@ -57,7 +57,7 @@ userSchema.pre('save', async function (next) {
 
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined; // to be deleted after check if it's equal
-  this.passwordChangedAt = Date.now();
+  this.passwordChangedAt = Date.now() - 1000;
 
   next();
 });

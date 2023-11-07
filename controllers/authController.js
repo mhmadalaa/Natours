@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const sendEmail = require('../utils/email');
@@ -122,17 +124,17 @@ exports.restrictTo = (...roles) => {
 };
 
 exports.forgetPassword = async (req, res, next) => {
-  // 1. Get user based on posted email
+  // Get user based on his email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
     return next(new AppError('There is no user with this email address!'));
   }
 
-  // 2. Generate random reset token
+  // Generate random reset token
   const resetToken = user.createPasswordResetToken();
   user.save({ validateBeforeSave: false });
 
-  // 3. Send it to user's email
+  // Send reset token to user's email
   try {
     await sendEmail({
       email: 'mhmadalaa666@gmail.com',
@@ -162,11 +164,42 @@ exports.forgetPassword = async (req, res, next) => {
   }
 };
 
-exports.resetPassword = (req, res, next) => {
-  // FIXME: just for testing the route
+exports.resetPassword = async (req, res, next) => {
+  // encrypt the token to match the saved one
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.resetToken)
+    .digest('hex');
+
+  // find the user by token and not exceded the expires date
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // update the password or return an error if exist
+  if (!user) {
+    return next(new AppError('Token is invalide or has been expired!', 400));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  if (user.password && user.password === user.passwordConfirm) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+  } else {
+    return next(
+      new AppError('Password is invalide or not match the confirmation', 400),
+    );
+  }
+
+  // login the user again
+  const token = getUserJWT(user._id);
+
   res.status(200).json({
-    'reset-token': req.params,
-    body: req.body,
-    jwt: req.headers.cookie,
+    status: 'success',
+    token,
   });
 };
