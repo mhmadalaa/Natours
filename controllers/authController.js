@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
-const { promisify } = require('util');
-const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
 const User = require('../models/userModel');
+const AppError = require('../utils/appError');
+const sendEmail = require('../utils/email');
+const catchAsync = require('../utils/catchAsync');
+const { promisify } = require('util');
 
 const getUserJWT = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -118,4 +119,54 @@ exports.restrictTo = (...roles) => {
 
     next();
   };
+};
+
+exports.forgetPassword = async (req, res, next) => {
+  // 1. Get user based on posted email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new AppError('There is no user with this email address!'));
+  }
+
+  // 2. Generate random reset token
+  const resetToken = user.createPasswordResetToken();
+  user.save({ validateBeforeSave: false });
+
+  // 3. Send it to user's email
+  try {
+    await sendEmail({
+      email: 'mhmadalaa666@gmail.com',
+      subject: 'Password Reset',
+      message: `That's a 10 minutes valid token ${resetToken} copy it to change your password`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'An email will be send to complete the steps',
+      // FIXME: the reset token shouldn't be returned to the client with the response
+      // it must be returned in a trusted place which the correct user have access to
+      // aka the `email`
+      resetToken,
+    });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError(
+        'There is an error when sending the email, pleas try again!',
+        500,
+      ),
+    );
+  }
+};
+
+exports.resetPassword = (req, res, next) => {
+  // FIXME: just for testing the route
+  res.status(200).json({
+    'reset-token': req.params,
+    body: req.body,
+    jwt: req.headers.cookie,
+  });
 };
