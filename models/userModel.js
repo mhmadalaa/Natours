@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { default: isEmail } = require('validator/lib/isEmail');
+const hashToken = require('../utils/hashToken');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -50,6 +51,8 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  emailResetToken: String,
+  emailResetExpires: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -70,22 +73,26 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userPassword,
-) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.correctPassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
+  this.passwordResetToken = hashToken(resetToken);
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
+};
+
+userSchema.methods.createEmailResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.emailResetToken = hashToken(resetToken);
+
+  this.emailResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
 };

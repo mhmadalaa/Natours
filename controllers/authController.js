@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const sendEmail = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
 const { promisify } = require('util');
+const hashToken = require('../utils/hashToken');
 
 const getUserJWT = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -15,30 +15,29 @@ const getUserJWT = (id) => {
 
 const isValidUser = async (email, password) => {
   const user = await User.findOne({ email: email }).select('+password');
-  let correct = false;
-  if (user !== null) {
-    correct = await user.correctPassword(password, user.password);
-  }
 
-  if (!correct) {
+  if (!user || !(await user.correctPassword(password))) {
     return undefined;
   }
 
   return user;
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
-  const token = getUserJWT(req.user._id.valueOf());
+const createSendJWTToken = (user, statusCode, message, res) => {
+  const token = getUserJWT(user.id);
 
-  res.status(201).json({
+  res.status(statusCode).json({
     status: 'success',
+    message: message,
     token: token,
-    user: req.user,
   });
+};
+
+exports.signup = catchAsync(async (req, res, next) => {
+  createSendJWTToken(req.user, 201, 'User Create.', res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  let token = '';
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -50,13 +49,8 @@ exports.login = catchAsync(async (req, res, next) => {
       return next(new AppError('Un valid email or password!', 401));
     }
 
-    token = getUserJWT(validUser._id);
+    createSendJWTToken(validUser, 200, 'User Login.', res);
   }
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -123,7 +117,8 @@ exports.restrictTo = (...roles) => {
   };
 };
 
-exports.forgetPassword = async (req, res, next) => {
+// FORGOT AND REST PASSWORD IS FOR CHANGING THE PASSWORD THAT THE USER CAN'T REMEMBER
+exports.forgetPassword = catchAsync(async (req, res, next) => {
   // Get user based on his email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
@@ -162,14 +157,11 @@ exports.forgetPassword = async (req, res, next) => {
       ),
     );
   }
-};
+});
 
-exports.resetPassword = async (req, res, next) => {
+exports.resetPassword = catchAsync(async (req, res, next) => {
   // encrypt the token to match the saved one
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(req.params.resetToken)
-    .digest('hex');
+  const hashedToken = hashToken(req.params.resetToken);
 
   // find the user by token and not exceded the expires date
   const user = await User.findOne({
@@ -196,10 +188,97 @@ exports.resetPassword = async (req, res, next) => {
   }
 
   // login the user again
-  const token = getUserJWT(user._id);
+  createSendJWTToken(user, 200, 'Password Reset', res);
+});
 
-  res.status(200).json({
-    status: 'success',
-    token,
+// UPDATE THE PASSWORD FOR THE LOGEDIN USER WHO REMEMBER THE CURRENT PASSWORD
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // Get the logged in user from db
+  const user = await User.findById(req.user._id).select('+password');
+
+  // Check if the sended password is correct
+  if (!user || !(await user.correctPassword(req.body.password))) {
+    return next(new AppError('This password is incorrect, try again.', 400));
+  }
+
+  // update the password
+  if (req.body.newPassword === req.body.newPasswordConfirm) {
+    user.password = req.body.newPassword;
+    user.save({ validateBeforeSave: false });
+  } else {
+    return next(
+      new AppError('Password is invalide or not match the confirmation', 400),
+    );
+  }
+
+  // login the user again
+  createSendJWTToken(user, 200, 'Password Updated', res);
+});
+
+exports.changeEmail = catchAsync(async (req, res, next) => {
+  // Get the logged in user from db
+  const user = await User.findById(req.user._id);
+
+  // Generate random reset token
+  const resetToken = user.createEmailResetToken();
+  user.save({ validateBeforeSave: false });
+
+  // Send reset token to user's email
+  try {
+    await sendEmail({
+      email: 'mhmadalaa666@gmail.com',
+      subject: 'Email Reset',
+      message: `That's a 10 minutes valid token ${resetToken} copy it to change your Email`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'An email will be send to complete the steps',
+      // FIXME: the reset token shouldn't be returned to the client with the response
+      // it must be returned in a trusted place which the correct user have access to
+      // aka the `email`
+      resetToken,
+    });
+  } catch (err) {
+    user.emailResetToken = undefined;
+    user.emailResetExpires = undefined;
+    user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError(
+        'There is an error when sending the email, pleas try again!',
+        500,
+      ),
+    );
+  }
+});
+
+exports.resetEmail = catchAsync(async (req, res, next) => {
+  // encrypt the token to match the saved one
+  const hashedToken = hashToken(req.params.resetToken);
+
+  // find the user by token and not exceded the expires date
+  const user = await User.findOne({
+    emailResetToken: hashedToken,
+    emailResetExpires: { $gt: Date.now() },
   });
-};
+
+  // update the password or return an error if exist
+  if (!user) {
+    return next(new AppError('Token is invalide or has been expired!', 400));
+  }
+
+  user.email = req.body.email;
+  if (user.email) {
+    user.emailResetToken = undefined;
+    user.emailResetExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+  } else {
+    return next(new AppError('Provide a valid email.', 400));
+  }
+
+  // login the user again
+  createSendJWTToken(user, 200, 'Email Reset', res);
+});
+
