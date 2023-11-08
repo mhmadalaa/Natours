@@ -15,6 +15,8 @@ router.patch('/reset-password/:resetToken', authController.resetPassword);
 router.post('/change-email', authController.protect, authController.changeEmail);
 router.patch('/reset-email/:resetToken', authController.protect, authController.resetEmail);
 
+router.patch('/update-user', authController.protect, userController.updateUser);
+
 
 // TODO: LOGOUT user
 // router.post('/logout', authController.login, authController.logout);

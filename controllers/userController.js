@@ -2,6 +2,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const userSanitize = require('./../utils/userSanitize');
+const updateUserSanitize = require('../utils/updateUserSanitize');
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const users = await User.find();
@@ -31,15 +32,24 @@ exports.getUser = catchAsync(async (req, res, next) => {
   });
 });
 
+// The user can only update any field rather than [password, email, roles] with this function,
+// the other fields need a special routers and functionis to handle
 exports.updateUser = catchAsync(async (req, res, next) => {
-  let user = await User.findByIdAndUpdate(req.params.id, req.body);
-
-  if (!user) {
-    next(new AppError(`user of this id: ${req.params.id} is not found!`));
-    return;
+  if (
+    req.body.password ||
+    req.body.passwordConfirm ||
+    req.body.email ||
+    req.body.roles
+  ) {
+    return next(new AppError('This route not for updating crucial data!'));
   }
 
-  user = await User.findById(req.params.id);
+  // Update user document
+  const filteredBody = updateUserSanitize(req.body);
+  const user = await User.findByIdAndUpdate(req.user._id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
 
   res.status(200).json({
     status: 'success',
