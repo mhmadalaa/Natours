@@ -16,19 +16,15 @@ router.post('/change-email', authController.protect, authController.changeEmail)
 router.patch('/reset-email/:resetToken', authController.protect, authController.resetEmail);
 
 router.patch('/update-user', authController.protect, userController.updateUser);
+router.delete('/delete-user', authController.protect, userController.deleteUser);
 
 
 // TODO: LOGOUT user
 // router.post('/logout', authController.login, authController.logout);
 
 
-// FIXME: THESE ROUTES JUST FOR DEBUGGING, NOT READY YET FOR PRODUCTION USEAGE
+// FIXME: THESE ROUTERS JUST FOR DEBUGGING, NOT READY YET FOR PRODUCTION USEAGE
 router.route('/').get(userController.getAllUsers);
-
-router
-  .route('/:id')
-  .get(userController.getUser)
-  .patch(userController.updateUser)
-  .delete(userController.deleteUser);
+router.route('/:id').get(userController.getUser);
 
 module.exports = router;

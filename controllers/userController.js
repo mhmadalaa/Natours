@@ -58,14 +58,12 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndDelete(req.params.id);
+  const user = await User.findById(req.user._id);
+  user.active = false;
+  user.save({ validateBeforeSave: false });
 
-  if (!user) {
-    next(new AppError(`user of this id: ${req.params.id} is not found!`));
-    return;
-  }
-
-  res.status(200).json({
+  // 204 status doesn't retutrn a content of response
+  res.status(204).json({
     status: 'success',
     message: `user ${user.name} is deleted successfully.`,
   });
