@@ -1,9 +1,11 @@
 const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 
 const AppError = require('./utils/appError');
+const sanitizeInput = require('./utils/sanitizeInput');
 const globalErrorHandler = require('./controllers/errorController');
 
 const tourRouter = require('./routes/tourRoute');
@@ -14,7 +16,7 @@ const app = express();
 // Set security http headers
 app.use(helmet());
 
-// Logging the requests while develop
+// Logging the requests in development environment
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -27,14 +29,20 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Barser to accept json data format with the request body
+// Barser to accept json data format with the request body with max 10kb data
 app.use(
   express.json({
     limit: '10kb',
   }),
 );
 
-// to server static file from `public` dir
+// Sanitize data against NoSQL query injection
+app.use(mongoSanitize());
+
+// Sanitize data againt XSS (Cross Site Scripting) attack
+app.use(sanitizeInput);
+
+// Server static files from `public` dir
 app.use(express.static('./public'));
 
 // ROUTERS

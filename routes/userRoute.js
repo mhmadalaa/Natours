@@ -21,6 +21,7 @@ router.delete('/delete-user', authController.protect, userController.deleteUser)
 
 // TODO: LOGOUT user
 // router.post('/logout', authController.login, authController.logout);
+// Confirm the signup user by sending `hashed token` via email
 
 
 // FIXME: THESE ROUTERS JUST FOR DEBUGGING, NOT READY YET FOR PRODUCTION USEAGE
