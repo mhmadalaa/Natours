@@ -26,10 +26,29 @@ const isValidUser = async (email, password) => {
 const createSendJWTToken = (user, statusCode, message, res) => {
   const token = getUserJWT(user.id);
 
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true;
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+
+  user.password = undefined;
+  user.active = undefined;
+
   res.status(statusCode).json({
     status: 'success',
     message: message,
     token: token,
+    data: {
+      user,
+    },
   });
 };
 
@@ -281,4 +300,3 @@ exports.resetEmail = catchAsync(async (req, res, next) => {
   // login the user again
   createSendJWTToken(user, 200, 'Email Reset', res);
 });
-
