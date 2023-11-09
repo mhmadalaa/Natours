@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
@@ -10,11 +11,15 @@ const userRouter = require('./routes/userRoute');
 
 const app = express();
 
-// MIDDLEWARES
+// Set security http headers
+app.use(helmet());
+
+// Logging the requests while develop
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Limit requests
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
@@ -22,13 +27,15 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-app.use(express.json());
-app.use(express.static('./public')); // to server static file not from the route
+// Barser to accept json data format with the request body
+app.use(
+  express.json({
+    limit: '10kb',
+  }),
+);
 
-app.use((req, res, next) => {
-  req.requestTime = new Date().toISOString();
-  next();
-});
+// to server static file from `public` dir
+app.use(express.static('./public'));
 
 // ROUTERS
 app.use('/api/v1/tours', tourRouter);
