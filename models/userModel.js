@@ -53,10 +53,17 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
   emailResetToken: String,
   emailResetExpires: Date,
+  emailCofirmToken: String,
+  emailConfirmExpires: Date,
   active: {
     type: Boolean,
     default: true,
     select: false,
+  },
+  authenticated: {
+    type: Boolean,
+    default: true,
+    // select: false,
   },
 });
 
@@ -106,6 +113,16 @@ userSchema.methods.createEmailResetToken = function () {
   this.emailResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
+};
+
+userSchema.methods.createEmailConfirmToken = function () {
+  const confirmToken = crypto.randomBytes(32).toString('hex');
+
+  this.emailCofirmToken = hashToken(confirmToken);
+
+  this.emailConfirmExpires = Date.now() + 10 * 60 * 1000;
+
+  return confirmToken;
 };
 
 const User = mongoose.model('User', userSchema);

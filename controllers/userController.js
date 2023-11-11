@@ -1,7 +1,7 @@
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const userSanitize = require('./../utils/userSanitize');
+// const userSanitize = require('./../utils/userSanitize');
 const updateUserSanitize = require('../utils/updateUserSanitize');
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
@@ -12,11 +12,11 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = catchAsync(async (req, res, next) => {
-  req.user = await User.create(userSanitize(req.body));
+// exports.createUser = catchAsync(async (req, res, next) => {
+//   req.user = await User.create(userSanitize(req.body));
 
-  next();
-});
+//   next();
+// });
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id);

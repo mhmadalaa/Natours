@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
+const userSanitize = require('../utils/userSanitize');
 const sendEmail = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
 const { promisify } = require('util');
@@ -14,9 +15,11 @@ const getUserJWT = (id) => {
 };
 
 const isValidUser = async (email, password) => {
-  const user = await User.findOne({ email: email }).select('+password');
+  const user = await User.findOne({ email: email }).select(
+    '+password',
+  );
 
-  if (!user || !(await user.correctPassword(password))) {
+  if (!user || !(await user.correctPassword(password)) || !user.authenticated) {
     return undefined;
   }
 
@@ -53,7 +56,63 @@ const createSendJWTToken = (user, statusCode, message, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  createSendJWTToken(req.user, 201, 'User Create.', res);
+  // create a user but marked as not authenticated
+  const user = await User.create(userSanitize(req.body));
+  user.authenticated = false;
+
+  // Generate random confirm token
+  const confirmToken = user.createEmailConfirmToken();
+  user.save({ validateBeforeSave: false });
+
+  // Send confirm token to user email
+  try {
+    await sendEmail({
+      email: 'mhmadalaa666@gmail.com',
+      subject: 'Email Confirm',
+      message: `That's a 10 minutes valid token ${confirmToken} to Confirm your Email`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'An email will be send to complete the steps',
+      // FIXME: the confirm token shouldn't be returned to the client with the response
+      // it must be returned in a trusted place which the correct user have access to
+      // aka the `email`
+      confirmToken,
+    });
+  } catch (err) {
+    await User.findByIdAndDelete(user._id);
+
+    return next(
+      new AppError(
+        'There is an error while sending the email, pleas signup again!',
+        500,
+      ),
+    );
+  }
+});
+
+exports.confirmSignup = catchAsync(async (req, res, next) => {
+  // encrypt the token to match the saved one
+  const hashedToken = hashToken(req.params.confirmToken);
+
+  // find the user by token and not exceded the expires date
+  const user = await User.findOne({
+    emailCofirmToken: hashedToken,
+    emailConfirmExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError('Token is invalide or has been expired!', 400));
+  }
+
+  // authenticate the created user before as a regular user
+  user.authenticated = true;
+  user.emailCofirmToken = undefined;
+  user.emailConfirmExpires = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  createSendJWTToken(user, 201, 'User Create.', res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
