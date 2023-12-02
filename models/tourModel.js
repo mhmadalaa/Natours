@@ -156,6 +156,17 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
+tourSchema.pre(/^find/, function (next) {
+  // populate is to fill the refrences field with the refrenced document in the
+  // retrieved document, and not on the database
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+
+  next();
+});
+
 tourSchema.post(/^find/, function (docs, next) {
   console.log(`excution time... ${Date.now() - this.startTime} ms`);
   next();
