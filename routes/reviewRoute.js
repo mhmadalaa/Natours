@@ -9,7 +9,7 @@ router.use(authController.protect);
 
 router
   .route('/:tourId/reviews/')
-  .post(reviewController.createReview)
+  .post(authController.restrictTo('user'), reviewController.createReview)
   .get(reviewController.getTourReviews);
 
 router.route('/:tourId/reviews/:rate').get(reviewController.getReveiwByRate);
@@ -18,9 +18,21 @@ router.route('/:tourId/reviews/:rate').get(reviewController.getReveiwByRate);
 //       so if it may make error like the upcoming two routers you should but
 //       the one which not started with parameter first
 // user given reviews
-router.route('/user').get(authController.protect, reviewController.userReviews);
+router
+  .route('/user/')
+  .get(authController.protect, reviewController.userReviews);
 
-router.route('/:reviewId').get(reviewController.getReviewById);
+router
+  .route('/:reviewId')
+  .get(reviewController.getReviewById)
+  .patch(
+    authController.restrictTo('user', 'admin'),
+    reviewController.updateReview,
+  )
+  .delete(
+    authController.restrictTo('user', 'admin'),
+    reviewController.deleteReview,
+  );
 
 // FIXME: DEBUGGING REOUTER
 router.route('/').get(reviewController.getAllReviews);

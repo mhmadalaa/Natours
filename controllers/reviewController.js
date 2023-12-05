@@ -20,6 +20,35 @@ exports.createReview = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.updateReview = catchAsync(async (req, res, next) => {
+  const review = await Review.findByIdAndUpdate(req.params.reviewId, req.body);
+
+  if (!review) {
+    return next(new AppError('There is not any review with this id', 404));
+  }
+
+  res.status(201).json({
+    status: 'success',
+    message: 'review updated!',
+    data: {
+      review,
+    },
+  });
+});
+
+exports.deleteReview = catchAsync(async (req, res, next) => {
+  const review = await Review.findByIdAndDelete(req.params.reviewId);
+
+  if (!review) {
+    return next(new AppError('There is not any review with this id', 404));
+  }
+
+  res.status(203).json({
+    status: 'success',
+    message: 'review deleted!',
+  });
+});
+
 exports.getAllReviews = catchAsync(async (req, res, next) => {
   const reviews = await Review.find();
 

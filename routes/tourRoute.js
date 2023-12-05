@@ -5,7 +5,10 @@ const reviewRouter = require('./reviewRoute');
 
 const router = express.Router();
 
-// reviews for specific tour, and let use review router for it 
+// check is login for all routers
+router.use(authController.protect);
+
+// reviews for specific tour, and let use review router for it
 router.use('/:tourId/reviews/', reviewRouter);
 
 router.route('/tour-stats').get(tourController.getTourStats);
@@ -20,7 +23,6 @@ router
   .route('/')
   .get(authController.protect, tourController.getAllTours)
   .post(
-    authController.protect,
     authController.restrictTo('guide', 'lead-guide', 'admin'),
     tourController.createTour,
   );
@@ -29,12 +31,10 @@ router
   .route('/:id/')
   .get(tourController.getTourById)
   .patch(
-    authController.protect,
     authController.restrictTo('guide', 'lead-guide', 'admin'),
     tourController.updateTour,
   )
   .delete(
-    authController.protect,
     authController.restrictTo('lead-guide', 'admin'),
     tourController.deleteTour,
   );
