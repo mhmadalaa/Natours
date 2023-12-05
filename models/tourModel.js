@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 
-// const User = require('./userModel');
-
 const tourSchema = new mongoose.Schema(
   {
     name: {
@@ -128,20 +126,21 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// get the review for this (tour id)
+// but doen't refrence review id's in tour model
+// and keep it in a virtual field and the populate
+// this virtual field in the controller
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'tour',
+});
+
 // DOCUMENT MIDDLEWARE
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
-
-// tourSchema.pre('save', async function (next) {
-//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
-//   console.log(guidesPromises);
-//   this.guides = await Promise.all(guidesPromises);
-//   console.log(this.guides);
-
-//   next();
-// });
 
 // tourSchema.post('save', function (doc, next) {
 //   console.log('document saved successfully...');
@@ -164,11 +163,6 @@ tourSchema.pre(/^find/, function (next) {
     select: '-__v -passwordChangedAt',
   });
 
-  next();
-});
-
-tourSchema.post(/^find/, function (docs, next) {
-  console.log(`excution time... ${Date.now() - this.startTime} ms`);
   next();
 });
 

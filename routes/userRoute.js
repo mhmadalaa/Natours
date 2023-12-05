@@ -1,8 +1,12 @@
 const express = require('express');
 const userController = require('./../controllers/userController');
 const authController = require('./../controllers/authController');
+const reviewRouter = require('./reviewRoute');
 
 const router = express.Router();
+
+// user given reviews
+router.use('/user/', reviewRouter);
 
 router.post(
   '/signup', 
@@ -57,6 +61,7 @@ router.delete(
   authController.protect,
   userController.deleteUser,
 );
+
 
 // FIXME: THESE ROUTERS JUST FOR DEBUGGING, NOT READY YET FOR PRODUCTION USEAGE
 router.route('/').get(userController.getAllUsers);

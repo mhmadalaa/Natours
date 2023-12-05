@@ -1,8 +1,12 @@
 const express = require('express');
 const tourController = require('./../controllers/tourController');
 const authController = require('./../controllers/authController');
+const reviewRouter = require('./reviewRoute');
 
 const router = express.Router();
+
+// reviews for specific tour, and let use review router for it 
+router.use('/:tourId/reviews/', reviewRouter);
 
 router.route('/tour-stats').get(tourController.getTourStats);
 

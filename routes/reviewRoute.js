@@ -3,19 +3,26 @@ const express = require('express');
 const reviewController = require('./../controllers/reviewController');
 const authController = require('./../controllers/authController');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-router.route('/create-review').post(reviewController.createReview);
-router.route('/get-reviews').get(reviewController.getAllReviews);
-router.route('/get-review/:id').get(reviewController.getReviewById);
+router.use(authController.protect);
 
-// for the logged in user
 router
-  .route('/get-user-reviews/')
-  .get(authController.protect, reviewController.getUserReviews);
+  .route('/:tourId/reviews/')
+  .post(reviewController.createReview)
+  .get(reviewController.getTourReviews);
 
-router.get('/get-tour-reviews/:id', reviewController.getTourReview);
+router.route('/:tourId/reviews/:rate').get(reviewController.getReveiwByRate);
 
-router.get('/get-tour-rate/', reviewController.getReveiwByRate);
+// FIXME: when express match the url, it always match the parameter with the path
+//       so if it may make error like the upcoming two routers you should but
+//       the one which not started with parameter first
+// user given reviews
+router.route('/user').get(authController.protect, reviewController.userReviews);
+
+router.route('/:reviewId').get(reviewController.getReviewById);
+
+// FIXME: DEBUGGING REOUTER
+router.route('/').get(reviewController.getAllReviews);
 
 module.exports = router;

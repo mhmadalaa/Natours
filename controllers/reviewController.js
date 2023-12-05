@@ -1,10 +1,11 @@
-const { default: mongoose } = require('mongoose');
-
 const catchAsync = require('./../utils/catchAsync');
 const Review = require('./../models/reviewModel');
 const AppError = require('./../utils/appError');
 
 exports.createReview = catchAsync(async (req, res, next) => {
+  req.body.tour = req.body.tour || req.params.tourId;
+  req.body.user = req.body.user || req.user._id;
+
   const review = await Review.create(req.body);
 
   if (!review) {
@@ -36,7 +37,7 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.getReviewById = catchAsync(async (req, res, next) => {
-  const review = await Review.findById(req.params.id);
+  const review = await Review.findById(req.params.reviewId);
 
   if (!review) {
     return next(new AppError('There is not a review with this id', 404));
@@ -50,7 +51,7 @@ exports.getReviewById = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUserReviews = catchAsync(async (req, res, next) => {
+exports.userReviews = catchAsync(async (req, res, next) => {
   const reviews = await Review.find({ user: req.user._id });
 
   if (!reviews) {
@@ -65,8 +66,8 @@ exports.getUserReviews = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getTourReview = catchAsync(async (req, res, next) => {
-  const reviews = await Review.find({ tour: req.params.id });
+exports.getTourReviews = catchAsync(async (req, res, next) => {
+  const reviews = await Review.find({ tour: req.params.tourId });
 
   if (!reviews) {
     return next(new AppError('Can not get reviews', 404));
@@ -82,9 +83,12 @@ exports.getTourReview = catchAsync(async (req, res, next) => {
 
 exports.getReveiwByRate = catchAsync(async (req, res, next) => {
   // to get the reviews for specific rating and for range of 1
-  const queryObj = { ...req.query };
-  const tourId = new mongoose.Types.ObjectId(queryObj.id);
-  const rating = parseInt(req.query.rating);
+  // const queryObj = { ...req.query };
+  // const tourId = new mongoose.Types.ObjectId(queryObj.id);
+  // const rating = parseInt(req.query.rating);
+
+  const tourId = req.params.tourId;
+  const rating = parseInt(req.params.rate);
 
   const reviews = await Review.find({
     tour: tourId,
