@@ -35,6 +35,10 @@ const reviewSchema = new mongoose.Schema(
   },
 );
 
+// we add indexes to tour-user to and set this index to be unique
+// to perform that each tour is being reviewd at most onetime by each reviewer
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
+
 reviewSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'user',
