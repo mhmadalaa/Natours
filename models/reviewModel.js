@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Tour = require('./tourModel');
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -52,6 +53,54 @@ reviewSchema.pre(/^find/, function (next) {
   // })
 
   next();
+});
+
+reviewSchema.statics.calcAverageRatings = async function (tourId) {
+  let stats = await this.aggregate([
+    {
+      $match: { tour: tourId },
+    },
+    {
+      $group: {
+        _id: 'tour',
+        nRating: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+      },
+    },
+  ]);
+
+  // to handle if there is no reviews with the passed tourId
+  if (stats.length === 0) stats = [{ rating: 0, avgRating: 0 }];
+
+  await Tour.findByIdAndUpdate(tourId, {
+    ratingsQuantity: stats[0].nRating,
+    ratingsAverage: stats[0].avgRating,
+  });
+};
+
+reviewSchema.post('save', function () {
+  // this: for the document, constructor: for the model of the document
+  // `Review.calcAverageRatings(this.tour);` but this middleware
+  // is a part of the `reviewSchema` which we create the model from
+  // so it acutaly a closed circle of dependencies, so one of the
+  // solutions to solve that is to use `constructor`
+  // which is a function to the document model in this case `reviewModel`
+  // without breaking the code structure
+  this.constructor.calcAverageRatings(this.tour);
+});
+
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  // when i reach this, i need the `tourid`
+  // recalculate the ratigns average and quantity
+
+  // The document that `findOneAndUpdate()` will modify
+  this.r = await this.model.findOne(this.getQuery());
+
+  next();
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  await this.r.constructor.calcAverageRatings(this.r.tour);
 });
 
 const Review = mongoose.model('Review', reviewSchema);

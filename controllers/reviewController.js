@@ -43,7 +43,7 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
     return next(new AppError('There is not any review with this id', 404));
   }
 
-  res.status(203).json({
+  res.status(200).json({
     status: 'success',
     message: 'review deleted!',
   });
