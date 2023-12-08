@@ -126,6 +126,7 @@ const tourSchema = new mongoose.Schema(
 tourSchema.index({ price: 1 });
 tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
@@ -171,12 +172,18 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
+// TODO: comment this middleware because it conflicts with
+//       `getDistances` function in `tourController` with the aggregation pipeline
+//       cause `$geoNear` properity must be the first, 
+//       so for later will uncomment and solve the conflict
 // AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
 
-  next();
-});
+//   console.log(this.pipeline());
+
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
