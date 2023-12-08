@@ -19,6 +19,7 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
     .paginate();
 
   const tours = await features.query;
+  // const tours = await features.query.explain();
 
   res.status(200).json({
     status: 'success',
@@ -29,8 +30,79 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+
+  const [lat, lng] = latlng.split(',');
+
+  if (!lat || !lng) {
+    return next(
+      new AppError(
+        'Please provide latitude and longitude in the format <lat,lng> ',
+        404,
+      ),
+    );
+  }
+
+  // radius must be in radain, so the radian is to divide the distance by the radius of the sphere
+  // earth radius in mile: 3963.2, in kilo meter: 6378.1
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: {
+      tours,
+    },
+  });
+});
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+
+  const [lat, lng] = latlng.split(',');
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+
+  if (!lat || !lng) {
+    return next(
+      new AppError(
+        'Please provide latitude and longitude in the format <lat,lng> ',
+        404,
+      ),
+    );
+  }
+
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: { type: 'Point', coordinates: [lng * 1, lat * 1] },
+        distanceField: 'distance', // The output field that contains the calculated distance.
+        distanceMultiplier: multiplier,
+        spherical: true,
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        distance: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: distances,
+    },
+  });
+});
+
 exports.getTourById = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findById(req.params.id);
+  const tour = await Tour.findById(req.params.id).populate('reviews');
 
   if (!tour) {
     next(new AppError(`tour with ID ${req.params.id} not exist`, 404));

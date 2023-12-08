@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -11,10 +10,6 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       maxlength: [40, 'A tour name must have less or equal than 40 characters'],
       minlength: [10, 'A tour name must have more or equal than 10 characters'],
-      // validate: {
-      // validator: validator.isAlpha,
-      //   message: 'Tour name must be Alpha characters only',
-      // },
     },
     slug: {
       type: String,
@@ -55,6 +50,7 @@ const tourSchema = new mongoose.Schema(
       defaultI: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be lower than 5.0'],
+      set: (val) => Math.round(val * 10) / 10,
     },
     ratingsQuantity: {
       type: Number,
@@ -99,7 +95,8 @@ const tourSchema = new mongoose.Schema(
       address: String,
       description: String,
     },
-    locations: [ // all the locations in each tour
+    locations: [
+      // all the locations in each tour
       {
         // GeoJSON
         type: {
@@ -113,6 +110,12 @@ const tourSchema = new mongoose.Schema(
         day: Number, // the number of days the tour be in this location
       },
     ],
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -120,8 +123,23 @@ const tourSchema = new mongoose.Schema(
   },
 );
 
+tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
+
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+// get the review for this (tour id)
+// but doen't refrence review id's in tour model
+// and keep it in a virtual field and the populate
+// this virtual field in the controller
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'tour',
 });
 
 // DOCUMENT MIDDLEWARE
@@ -130,10 +148,10 @@ tourSchema.pre('save', function (next) {
   next();
 });
 
-tourSchema.post('save', function (doc, next) {
-  console.log('document saved successfully...');
-  next();
-});
+// tourSchema.post('save', function (doc, next) {
+//   console.log('document saved successfully...');
+//   next();
+// });
 
 // QUERY MIDDLEWARE
 tourSchema.pre(/^find/, function (next) {
@@ -143,17 +161,29 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
-tourSchema.post(/^find/, function (docs, next) {
-  console.log(`excution time... ${Date.now() - this.startTime} ms`);
+tourSchema.pre(/^find/, function (next) {
+  // populate is to fill the refrences field with the refrenced document in the
+  // retrieved document, and not on the database
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+
   next();
 });
 
+// TODO: comment this middleware because it conflicts with
+//       `getDistances` function in `tourController` with the aggregation pipeline
+//       cause `$geoNear` properity must be the first, 
+//       so for later will uncomment and solve the conflict
 // AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
 
-  next();
-});
+//   console.log(this.pipeline());
+
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
