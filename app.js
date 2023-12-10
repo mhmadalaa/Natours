@@ -10,6 +10,7 @@ const AppError = require('./utils/appError');
 const sanitizeInput = require('./utils/sanitizeInput');
 const globalErrorHandler = require('./controllers/errorController');
 
+const viewRouter = require('./routes/viewRoute');
 const tourRouter = require('./routes/tourRoute');
 const userRouter = require('./routes/userRoute');
 const reviewRouter = require('./routes/reviewRoute');
@@ -67,13 +68,7 @@ app.use(
 );
 
 // view ROUTER
-app.get('/', (req, res) => {
-  res.status(200).render('base', {
-    tour: 'Tour XX',
-    user: 'User XX',
-  });
-});
-
+app.use('/', viewRouter);
 // API ROUTERS
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
