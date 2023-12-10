@@ -66,6 +66,14 @@ app.use(
   }),
 );
 
+// view ROUTER
+app.get('/', (req, res) => {
+  res.status(200).render('base', {
+    tour: 'Tour XX',
+    user: 'User XX',
+  });
+});
+
 // API ROUTERS
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
