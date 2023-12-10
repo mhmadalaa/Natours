@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -14,6 +15,13 @@ const userRouter = require('./routes/userRoute');
 const reviewRouter = require('./routes/reviewRoute');
 
 const app = express();
+
+// View templates
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// Serve static files from `public` dir without routing
+app.use(express.static(path.join(__dirname, './public')));
 
 // Set security http headers
 app.use(helmet());
@@ -58,10 +66,7 @@ app.use(
   }),
 );
 
-// Server static files from `public` dir
-app.use(express.static('./public'));
-
-// ROUTERS
+// API ROUTERS
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
