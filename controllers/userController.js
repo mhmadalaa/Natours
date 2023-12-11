@@ -32,14 +32,14 @@ exports.getUser = catchAsync(async (req, res, next) => {
   });
 });
 
-// The user can only update any field rather than [password, email, roles] with this function,
+// The user can only update any field rather than [password, email, role] with this function,
 // the other fields need a special routers and functionis to handle
 exports.updateUser = catchAsync(async (req, res, next) => {
   if (
     req.body.password ||
     req.body.passwordConfirm ||
     req.body.email ||
-    req.body.roles
+    req.body.role
   ) {
     return next(new AppError('This route not for updating crucial data!'));
   }

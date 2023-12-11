@@ -179,7 +179,7 @@ exports.restrictTo = (...roles) => {
     // as it comes from 'protect' pre middleware
     // so it must be authenticated to get authorization permissions
     try {
-      if (!roles.includes(req.user.roles)) {
+      if (!roles.includes(req.user.role)) {
         return next(
           new AppError(
             'This user does not have the right to do this operation!',
