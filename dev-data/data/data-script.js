@@ -2,6 +2,8 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const fs = require('fs');
 const Tour = require('./../../models/tourModel');
+const User = require('./../../models/userModel');
+const Review = require('./../../models/reviewModel');
 
 // CONNEC TO REMOTE DATABASE
 const DB = process.env.DATABASE.replace(
@@ -24,12 +26,24 @@ mongoose
 const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'),
 );
+const users = JSON.parse(
+  fs.readFileSync(`${__dirname}/users.json`, 'utf-8'),
+);
+const reviews = JSON.parse(
+  fs.readFileSync(`${__dirname}/reviews.json`, 'utf-8'),
+);
 
 // IMPORT DATA INTO DATABASE
 const importData = async () => {
   try {
     await Tour.create(tours);
-    console.log('Data loaded sucessfully.');
+    console.log('Tours loaded sucessfully.');
+
+    await User.create(users);
+    console.log('Users loaded sucessfully.');
+
+    await Review.create(reviews);
+    console.log('Reviews loaded sucessfully.');
   } catch (err) {
     console.log(err);
   }
@@ -40,7 +54,13 @@ const importData = async () => {
 const deleteData = async () => {
   try {
     await Tour.deleteMany();
-    console.log('Data deleted.');
+    console.log('Tour Data deleted.');
+
+    await User.deleteMany();
+    console.log('User Data deleted.');
+
+    await Review.deleteMany();
+    console.log('Review Data deleted.');
   } catch (err) {
     console.log(err);
   }
