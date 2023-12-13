@@ -1,4 +1,5 @@
 const express = require('express');
+
 const userController = require('./../controllers/userController');
 const authController = require('./../controllers/authController');
 const reviewRouter = require('./reviewRoute');
@@ -8,20 +9,11 @@ const router = express.Router();
 // user given reviews
 router.use('/user/', reviewRouter);
 
-router.post(
-  '/signup', 
-  authController.signup
-);
+router.post('/signup', authController.signup);
 
-router.patch(
-  '/confirm-signup/:confirmToken', 
-  authController.confirmSignup
-);
+router.patch('/confirm-signup/:confirmToken', authController.confirmSignup);
 
-router.post(
-  '/login', 
-  authController.login
-);
+router.post('/login', authController.login);
 
 router.patch(
   '/update-password',
@@ -29,15 +21,9 @@ router.patch(
   authController.updatePassword,
 );
 
-router.post(
-  '/forgot-password',
-  authController.forgetPassword
-);
+router.post('/forgot-password', authController.forgetPassword);
 
-router.patch(
-  '/reset-password/:resetToken', 
-  authController.resetPassword
-);
+router.patch('/reset-password/:resetToken', authController.resetPassword);
 
 router.post(
   '/change-email',
@@ -51,9 +37,11 @@ router.patch(
 );
 
 router.patch(
-  '/update-user', 
-  authController.protect, 
-  userController.updateUser
+  '/update-user',
+  authController.protect,
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateUser,
 );
 
 router.delete(
@@ -61,7 +49,6 @@ router.delete(
   authController.protect,
   userController.deleteUser,
 );
-
 
 // FIXME: THESE ROUTERS JUST FOR DEBUGGING, NOT READY YET FOR PRODUCTION USEAGE
 router.route('/').get(userController.getAllUsers);
