@@ -40,6 +40,7 @@ router.patch(
   '/update-user',
   authController.protect,
   userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
   userController.updateUser,
 );
 
