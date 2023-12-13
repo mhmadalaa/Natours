@@ -1,7 +1,74 @@
+const multer = require('multer');
+const sharp = require('sharp');
+
 const AppError = require('../utils/appError');
 const Tour = require('./../models/tourModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not an image! please upload only images', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadTourImages = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 },
+]);
+
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
+  if (!req.files) return next();
+
+  if (req.files.imageCover !== undefined) {
+    req.files.imageCover[0].filename = `tour-${req.params.id}-cover.jpeg`;
+
+    await sharp(req.files.imageCover[0].buffer)
+      .resize(2000, 1333)
+      .toFormat('jpeg')
+      .jpeg({ quality: 90 })
+      .toFile(`public/img/tours/${req.files.imageCover[0].filename}`);
+  }
+
+  if (req.files.images !== undefined) {
+    for (let i = 0; i < req.files.images.length; ++i) {
+      req.files.images[i].filename = `tour-${req.params.id}-${i + 1}.jpeg`;
+
+      await sharp(req.files.images[i].buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${req.files.images[i].filename}`);
+    }
+  }
+  next();
+});
+
+exports.handleTourImages = (req, res, next) => {
+  if (!req.files) return next();
+
+  if (req.files.imageCover !== undefined) {
+    req.body.imageCover = req.files.imageCover[0].filename;
+  }
+
+  if (req.files.images !== undefined) {
+    req.body.images = [];
+    for (let i = 0; i < req.files.images.length; ++i) {
+      req.body.images[i] = req.files.images[i].filename;
+    }
+  }
+
+  next();
+};
 
 exports.topTours = (req, res, next) => {
   req.query.sort = '-ratingsAverage,price';
