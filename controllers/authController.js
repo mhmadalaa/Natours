@@ -3,10 +3,12 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const userSanitize = require('../utils/userSanitize');
-const sendEmail = require('../utils/email');
+// const sendEmail = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
 const { promisify } = require('util');
 const hashToken = require('../utils/hashToken');
+
+const Email = require('./../utils/email');
 
 const getUserJWT = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -15,9 +17,7 @@ const getUserJWT = (id) => {
 };
 
 const isValidUser = async (email, password) => {
-  const user = await User.findOne({ email: email }).select(
-    '+password',
-  );
+  const user = await User.findOne({ email: email }).select('+password');
 
   if (!user || !(await user.correctPassword(password)) || !user.authenticated) {
     return undefined;
@@ -66,11 +66,17 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // Send confirm token to user email
   try {
-    await sendEmail({
-      email: 'mhmadalaa666@gmail.com',
-      subject: 'Email Confirm',
-      message: `That's a 10 minutes valid token ${confirmToken} to Confirm your Email`,
-    });
+    // await sendEmail({
+    //   email: 'mhmadalaa666@gmail.com',
+    //   subject: 'Email Confirm',
+    //   message: `That's a 10 minutes valid token ${confirmToken} to Confirm your Email`,
+    // });
+
+    const confirmUrl = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/confirm-signup/${confirmToken}`;
+
+    await new Email(user, confirmUrl).sendEmailSignupConfirm();
 
     res.status(200).json({
       status: 'success',
@@ -101,6 +107,8 @@ exports.confirmSignup = catchAsync(async (req, res, next) => {
     emailCofirmToken: hashedToken,
     emailConfirmExpires: { $gt: Date.now() },
   });
+
+  await new Email(user, 0).sendWelcome();
 
   if (!user) {
     return next(new AppError('Token is invalide or has been expired!', 400));
@@ -209,11 +217,16 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
   // Send reset token to user's email
   try {
-    await sendEmail({
-      email: 'mhmadalaa666@gmail.com',
-      subject: 'Password Reset',
-      message: `That's a 10 minutes valid token ${resetToken} copy it to change your password`,
-    });
+    // await sendEmail({
+    //   email: 'mhmadalaa666@gmail.com',
+    //   subject: 'Password Reset',
+    //   message: `That's a 10 minutes valid token ${resetToken} copy it to change your password`,
+    // });
+
+    const resetUrl = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/reset-password/${resetToken}`;
+    await new Email(user, resetUrl).sendPasswordReset(); // forgot password
 
     res.status(200).json({
       status: 'success',
@@ -298,16 +311,23 @@ exports.changeEmail = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user._id);
 
   // Generate random reset token
-  const resetToken = user.createEmailResetToken();
-  user.save({ validateBeforeSave: false });
+  const resetToken = await user.createEmailResetToken();
+  await user.save({ validateBeforeSave: false });
 
+  // FIXME: There is an caughted error whiel sending the email here
   // Send reset token to user's email
   try {
-    await sendEmail({
-      email: 'mhmadalaa666@gmail.com',
-      subject: 'Email Reset',
-      message: `That's a 10 minutes valid token ${resetToken} copy it to change your Email`,
-    });
+    // await sendEmail({
+    //   email: 'mhmadalaa666@gmail.com',
+    //   subject: 'Email Reset',
+    //   message: `That's a 10 minutes valid token ${resetToken} copy it to change your Email`,
+    // });
+
+    const resetUrl = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/reset-email/${resetUrl}`;
+
+    await new Email(user, resetUrl).sendEmailReset();
 
     res.status(200).json({
       status: 'success',
@@ -320,7 +340,7 @@ exports.changeEmail = catchAsync(async (req, res, next) => {
   } catch (err) {
     user.emailResetToken = undefined;
     user.emailResetExpires = undefined;
-    user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
 
     return next(
       new AppError(
