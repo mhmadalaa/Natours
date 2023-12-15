@@ -66,12 +66,6 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // Send confirm token to user email
   try {
-    // await sendEmail({
-    //   email: 'mhmadalaa666@gmail.com',
-    //   subject: 'Email Confirm',
-    //   message: `That's a 10 minutes valid token ${confirmToken} to Confirm your Email`,
-    // });
-
     const confirmUrl = `${req.protocol}://${req.get(
       'host',
     )}/api/v1/users/confirm-signup/${confirmToken}`;
@@ -217,12 +211,6 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
   // Send reset token to user's email
   try {
-    // await sendEmail({
-    //   email: 'mhmadalaa666@gmail.com',
-    //   subject: 'Password Reset',
-    //   message: `That's a 10 minutes valid token ${resetToken} copy it to change your password`,
-    // });
-
     const resetUrl = `${req.protocol}://${req.get(
       'host',
     )}/api/v1/users/reset-password/${resetToken}`;
@@ -314,18 +302,10 @@ exports.changeEmail = catchAsync(async (req, res, next) => {
   const resetToken = await user.createEmailResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // FIXME: There is an caughted error whiel sending the email here
-  // Send reset token to user's email
   try {
-    // await sendEmail({
-    //   email: 'mhmadalaa666@gmail.com',
-    //   subject: 'Email Reset',
-    //   message: `That's a 10 minutes valid token ${resetToken} copy it to change your Email`,
-    // });
-
     const resetUrl = `${req.protocol}://${req.get(
       'host',
-    )}/api/v1/users/reset-email/${resetUrl}`;
+    )}/api/v1/users/reset-email/${resetToken}`;
 
     await new Email(user, resetUrl).sendEmailReset();
 
