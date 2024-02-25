@@ -14,66 +14,45 @@
 
 This tour booking REST API provides endpoints for managing tour packages, bookings, customers, and tour guides. This API enables tour operators, travel agencies, and online booking platforms to offer tour packages and facilitate bookings efficiently.
 
+## Tools and Technologies
 
-## Tech/Framework used
+- [Node.js](https://nodejs.org/en/) - JS runtime environment.
+- [Express](http://expressjs.com/) - web framework.
+- [Mongoose](https://mongoosejs.com/) - Object Data Modelling library.
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) - Cloud database service.
+- [JSON Web Token](https://jwt.io/) - Security token.
+- [Postman](https://www.getpostman.com/) - API testing.
 
-- [Node.js](https://nodejs.org/en/)
-- [Express](https://expressjs.com/)
-- [MongoDB](https://www.mongodb.com/)
-- [Mongoose](https://mongoosejs.com/)
-- [Git](https://git-scm.com/)
-- [NodeMailer](https://nodemailer.com/about/)
-- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-- [Postman](https://www.postman.com/)
-- [VSCode](https://code.visualstudio.com/)
-- [Mailtrap](https://mailtrap.io/)
 
-## Getting Started
+## Installation
 
-### Prerequisites
-
-Before you begin, ensure you have met the following requirements:
-
-- Node.js and npm installed
-- MongoDB installed and running
-
-### Installation
-
-To install the Password-Manager, follow these steps:
-
-1. Clone the repository:
+- To install Natours, follow these steps:
 
    ```bash
-   git clone <repo-link>
+   $ git clone <repo-link>
+   $ cd <app-directory>
+   $ npm install
    ```
 
-2. Navigate to the project directory:
-
-   ```bash
-   cd <app-directory>
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-4. Set up environment variables:
+ - Set up environment variables:
    To run this project, you will need to add the following environment variables to your .env file\
    `HOST=`\
    `PORT=`\
    `DATABASE=`\
    `DATABASE_PASSWORD=`\
-   `SECRET_KEY=` jwt secrete key\
-   `EXPIRE_IN=` jwt expired date\
+   `JWT_SECRET=` jwt secrete key\
+   `JWT_EXPIRES_IN=` jwt expired date\
    `JWT_COOKIE_EXPIRES_IN=`\
    `EMAIL_USERNAME=`\
    `EMAIL_PASSWORD=`\
    `EMAIL_HOST=`\
-   `EMAIL_PORT=`
+   `EMAIL_PORT=`\
+   `EMAIL_FROM=`
 
-5. Start the application:
+- Start the application:
    ```bash
    npm run start
    ```
+
+## Documentation 
+API documentation [here :link:](d)
