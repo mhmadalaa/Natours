@@ -26,7 +26,7 @@ mongoose
     console.log('DB connection ERROR!!');
   });
 
-const server = app.listen(process.env.PORT || 3000, process.env.HOST, () => {
+const server = app.listen(process.env.PORT || 3000, () => {
   console.log('listenting...');
 });
 
